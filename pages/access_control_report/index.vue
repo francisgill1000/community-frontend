@@ -30,10 +30,6 @@
                   name: `Door Wise Access Control Report`,
                 },
                 {
-                  id: `Branch Wise Access Control Report`,
-                  name: `Branch Wise Access Control Report`,
-                },
-                {
                   id: `Allowed`,
                   name: `Access Granted Access Control Report`,
                 },
@@ -44,21 +40,6 @@
               ]"
               item-value="id"
               item-text="name"
-              :hide-details="true"
-            ></v-select>
-          </v-col>
-          <v-col md="2" sm="2" v-if="isCompany">
-            Branch
-            <v-select
-              placeholder="Branch"
-              class="mt-2"
-              outlined
-              dense
-              v-model="payload.branch_id"
-              x-small
-              :items="[{ id: ``, branch_name: `Select All` }, ...branches]"
-              item-value="id"
-              item-text="branch_name"
               :hide-details="true"
             ></v-select>
           </v-col>
@@ -193,36 +174,42 @@
             <template v-slot:item.dateTime="{ item, index }">
               {{ item.date }} {{ item.time }}
             </template>
-
-            <template v-slot:item.branch="{ item, index }">
-              <span>
-                <b>{{
-                  item.employee ? item.employee?.branch?.branch_name : "---"
-                }}</b
-                ><br />
-                {{ item.employee ? item.employee?.department?.name : "---" }}
-              </span>
-            </template>
             <template v-slot:item.in="{ item, index }">
-              {{ item.device.function !== "out" || item.device.function !== "Out" ? "In" : "---" }}
+              {{
+                item.device.function !== "out" || item.device.function !== "Out"
+                  ? "In"
+                  : "---"
+              }}
             </template>
             <template v-slot:item.out="{ item, index }">
-              {{ item.device.function == "out" || item.device.function == "Out" ? "Out" : "---" }}
+              {{
+                item.device.function == "out" || item.device.function == "Out"
+                  ? "Out"
+                  : "---"
+              }}
             </template>
             <template v-slot:item.user_type="{ item, index }">
-              Employee
+              {{ item.tanent ? "Tanent" : "Memeber" }}
             </template>
-
             <template v-slot:item.status="{ item, index }">
               {{ item.status }}
-              <br>
-              <small>{{item.reason ?? ""}}</small>
+              <br />
+              <small>{{ item.reason ?? "" }}</small>
             </template>
 
             <template v-slot:item.door="{ item, index }">
-              {{item.device.short_name}}
+              {{ item.device.short_name }}
             </template>
-            
+
+            <template v-slot:item.door="{ item, index }">
+              <div v-if="item.tanent">
+                {{ item.tanent.phone_number || "---" }}
+              </div>
+              <div v-if="item.member">
+                {{ item.member.phone_number || "---" }}
+              </div>
+            </template>
+
             <template v-slot:item.user="{ item }" style="padding: 0px">
               <v-row no-gutters>
                 <v-col
@@ -230,29 +217,48 @@
                   style="
                     padding: 3px;
                     padding-left: 0px;
-                    width: 30px;
-                    max-width: 30px;
+                    width: 45px;
+                    max-width: 45px;
                   "
                 >
                   <v-img
+                    v-if="item.tanent"
                     style="
                       border-radius: 50%;
-                      height: auto;
-                      width: 30px;
-                      max-width: 30px;
+                      height: 45px;
+                      width: 45px;
+                      max-width: 45px;
                     "
                     :src="
-                      item.employee && item.employee.profile_picture
-                        ? item.employee.profile_picture
+                      item.tanent && item.tanent.profile_picture
+                        ? item.tanent.profile_picture
+                        : '/no-profile-image.jpg'
+                    "
+                  >
+                  </v-img>
+
+                  <v-img
+                    v-if="item.member"
+                    style="
+                      border-radius: 50%;
+                      height: 45px;
+                      width: 45px;
+                      max-width: 45px;
+                    "
+                    :src="
+                      item.member && item.member.profile_picture
+                        ? item.member.profile_picture
                         : '/no-profile-image.jpg'
                     "
                   >
                   </v-img>
                 </v-col>
                 <v-col style="padding: 3px" md="8">
-                  <strong>
-                    {{ item.employee ? item.employee.first_name : "---" }}
-                    {{ item.employee ? item.employee.last_name : "---" }}
+                  <strong v-if="item.tanent">
+                    {{ item.tanent.full_name || "---" }}
+                  </strong>
+                  <strong v-if="item.member">
+                    {{ item.member.full_name || "---" }}
                   </strong>
                   <div class="secondary-value">
                     {{ item.UserID }}
@@ -276,7 +282,6 @@ export default {
     tableHeight: 750,
     status: "",
     department_ids: "",
-    employee_id: "",
     daily_date: "",
     to_date: "",
 
@@ -349,8 +354,8 @@ export default {
         text: "Phone",
         align: "left",
         sortable: true,
-        key: "employee.phone_number",
-        value: "employee.phone_number",
+        key: "phone_number",
+        value: "phone_number",
         width: "300px",
       },
       {
@@ -425,19 +430,6 @@ export default {
     });
   },
   created() {
-    let branch_header = [
-      {
-        text: "Branch/Department",
-        align: "left",
-        sortable: true,
-        key: "branch_id", //sorting
-        value: "branch", //edit purpose
-
-        filterable: true,
-        filterSpecial: true,
-      },
-    ];
-    this.headers.splice(2, 0, ...branch_header);
     this.setFromDate();
     this.getBranches();
     this.getScheduledEmployees();

@@ -241,27 +241,6 @@
   },
   {
     "icon": "mdi mdi-clock-time-four-outline",
-    "title": "Timezones",
-    "to": "/timezone",
-    "menu": "timezone",
-    "module": "access_control"
-  },
-  {
-    "icon": "mdi mdi-credit-card-clock-outline",
-    "title": "Mapped List",
-    "to": "/timezonemapping/list",
-    "menu": "timezone_mapping_list",
-    "module": "access_control"
-  },
-  {
-    "icon": "mdi mdi-camera-account",
-    "title": "Photo Upload",
-    "to": "/employee_photo_upload",
-    "menu": "employee_photo_upload",
-    "module": "access_control"
-  },
-  {
-    "icon": "mdi mdi-clock-time-four-outline",
     "title": "Access Control Report",
     "to": "/access_control_report",
     "menu": "timezone",
@@ -315,6 +294,29 @@
     "to": "/community/tanent/tanent_upload",
     "menu": "community",
     "module": "community"
+  },
+
+  {
+    "icon": "mdi-bed-outline",
+    "title": "Available",
+    "to": "/room/available-rooms",
+    "menu": "room",
+    "module": "room"
+  },
+
+  {
+    "icon": "mdi-bed",
+    "title": "Occupied",
+    "to": "/room/occupied-rooms",
+    "menu": "room",
+    "module": "room"
+  },
+  {
+    "icon": "mdi-calendar-alert",
+    "title": "Expire Rooms",
+    "to": "/room/expire-rooms",
+    "menu": "room",
+    "module": "room"
   },
   {
     "icon": "mdi-shape-square-plus",

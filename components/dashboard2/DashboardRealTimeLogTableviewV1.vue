@@ -2,7 +2,7 @@
   <div>
     <v-row>
       <v-col md="10" sm="10" xs="10" class="pl-5">
-        <span style="float: left"> <h4>Live Employee Logs on Devices</h4></span>
+        <span style="float: left"> <h4>Live Logs on Devices</h4></span>
         <span title="Click to Reload Logs"
           ><v-btn
             dense

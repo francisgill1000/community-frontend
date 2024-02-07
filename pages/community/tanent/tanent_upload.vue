@@ -5,7 +5,7 @@
   >
     <div class="text-center ma-2">
       <v-snackbar
-        :color="snackbar.color"
+        color="primary"
         v-model="snackbar.show"
         small
         top="top"
@@ -16,58 +16,73 @@
     </div>
 
     <v-row>
-      <v-col cols="12" class="text-right">
+      <v-col cols="4">
+        <v-autocomplete
+          @change="getRoomsByFloorId(floor_id)"
+          label="Floor Number"
+          outlined
+          v-model="floor_id"
+          :items="floors"
+          dense
+          item-text="floor_number"
+          item-value="id"
+          :hide-details="true"
+        >
+        </v-autocomplete>
+      </v-col>
+
+      <v-col cols="4">
+        <v-autocomplete
+          @change="getTanentsAndMembersByRoom(room_id)"
+          label="Room"
+          outlined
+          v-model="room_id"
+          :items="rooms"
+          dense
+          item-text="room_number"
+          item-value="id"
+          :hide-details="true"
+        >
+        </v-autocomplete>
+      </v-col>
+      <v-col cols="4" class="text-right">
         <SnippetsBack />
       </v-col>
       <v-col cols="5">
         <v-card class="photo-displaylist" style="height: 300px">
-          <v-toolbar color=" " dense flat style="border: 1px solid #ddd">
-            <span> Tanents </span>
-            <v-progress-linear
-              v-if="progressloading"
-              :active="loading"
-              :indeterminate="loading"
-              absolute
-              color="primary"
-            ></v-progress-linear>
+          <v-toolbar dense flat style="border: 1px solid #ddd">
+            <span> Tanents & Members </span>
           </v-toolbar>
+          <v-progress-linear
+            v-if="progressloading"
+            :active="loading"
+            :indeterminate="loading"
+            absolute
+            color="primary"
+          ></v-progress-linear>
           <div style="max-height: 250px; overflow-y: auto; overflow-x: hidden">
             <v-card-text>
               <v-row
-                class="timezone-displaylistview1"
-                v-for="(user, index) in leftEmployees"
+                no-gutters
+                v-for="user in leftEmployees"
                 :id="user.id"
                 v-model="leftEmployees"
                 :key="user.id"
                 style="border-bottom: 1px solid #ddd"
               >
-                <v-col md="1" style="padding: 0px; margin-top: -7px">
+                <v-col cols="1" class="pa-0 ma-0">
                   <v-checkbox
-                    v-if="user.profile_picture"
                     dense
                     small
-                    hideDetails
-                    v-model="leftSelectedEmp"
-                    :value="user.id"
                     primary
                     hide-details
-                  ></v-checkbox>
-                  <v-checkbox
-                    style="padding: 0px"
-                    v-else
-                    dense
-                    small
-                    disabled
-                    hideDetails
-                    indeterminate
                     v-model="leftSelectedEmp"
                     :value="user.id"
-                    primary
-                    hide-details
+                    :disabled="!user.profile_picture"
                   ></v-checkbox>
                 </v-col>
 
-                <v-col md="1" style="padding: 0px">
+                <v-col cols="1" class="pa-0 ma-0">
                   <v-avatar>
                     <v-img
                       :src="
@@ -79,11 +94,10 @@
                     </v-img>
                   </v-avatar>
                 </v-col>
-                <v-col md="3" style="padding: 0px; padding-top: 5px">
-                  {{ user.first_name }}
-                  {{ user.last_name }}
+                <v-col col="4">
+                  {{ user.full_name }} {{ user.isPrimaryUser }}
                 </v-col>
-                <v-col md="3" style="padding: 0px; padding-top: 5px">
+                <v-col col="3">
                   {{ user.system_user_id }}
                 </v-col>
               </v-row>
@@ -192,8 +206,7 @@
                   </v-avatar>
                 </v-col>
                 <v-col md="3" style="padding: 0px; padding-top: 5px">
-                  {{ user.first_name }}
-                  {{ user.last_name }}
+                  {{ user.full_name }}
                 </v-col>
                 <v-col md="3" style="padding: 0px; padding-top: 5px">
                   {{ user.employee_id }}
@@ -268,45 +281,6 @@
                 </v-col>
               </v-row>
             </v-card-text>
-            <!-- <v-card-text
-                class="photo-displaylistview"
-                v-for="(user, index) in leftDevices"
-                :id="user.id"
-                v-model="leftSelectedDevices"
-                :key="user.id"
-              >
-                <div class="row">
-                  <v-col class="col-1" style="padding: 0px">
-                    <v-checkbox
-                      v-if="user.status.name == 'active'"
-                      hideDetails
-                      class="col-1 d-flex flex-column justify-center"
-                      v-model="leftSelectedDevices"
-                      :value="user.id"
-                      primary
-                      hide-details
-                    ></v-checkbox>
-                    <v-checkbox
-                      v-else
-                      indeterminate
-                      value
-                      disabled
-                      hide-details
-                      class="col-1 d-flex flex-column justify-center"
-                    ></v-checkbox>
-                  </v-col>
-                  <div col-4 class="col" style="padding-top: 21px">
-                    {{ user.name }} : {{ user.device_id }}
-                    <span
-                      style="color: green"
-                      v-if="user.status.name == 'active'"
-                    >
-                      Online</span
-                    >
-                    <span style="color: red" v-else>Offline </span>
-                  </div>
-                </div>
-              </v-card-text> -->
           </div>
         </v-card>
       </v-col>
@@ -418,91 +392,40 @@
                 </v-col>
               </v-row>
             </v-card-text>
-            <!-- <v-card-text
-                class="photo-displaylistview"
-                v-for="(user, index) in rightDevices"
-                :id="user.id"
-                v-model="rightSelectedDevices"
-                :key="user.id"
-              >
-                <div class="row">
-                  <v-col class="col-1" style="padding: 0px">
-                    <v-checkbox
-                      hideDetails
-                      class="col-1 d-flex flex-column justify-center"
-                      v-model="rightSelectedDevices"
-                      :value="user.id"
-                      primary
-                      hide-details
-                    ></v-checkbox>
-                  </v-col>
-                  <div col class="col-sm" style="padding-top: 21px">
-                    {{ user.name }} : {{ user.device_id }}
-                  </div>
-                  <div col class="col-sm d-flex flex-column justify-center">
-                    <span
-                      v-if="user.sdkDeviceResponse == 'Success'"
-                      style="color: green"
-                      >{{ user.sdkDeviceResponse }}</span
-                    >
-                    <span v-else style="color: red">{{
-                      user.sdkDeviceResponse
-                    }}</span>
-                  </div>
-                </div>
-              </v-card-text> -->
           </div>
         </v-card>
       </v-col>
     </v-row>
     <v-row>
-      <v-col cols="12">
-        <div class="row">
-          <div class="col col-lg-6 text-center">
-            <span v-if="errors && errors.message" class="text-danger mt-2">{{
-              errors.message
-            }}</span>
-          </div>
-          <div class="col col-lg-3 text-right">
-            <div style="width: 150px; float: right">
-              <!-- <button
-                :loading="loading"
-                @click="goback()"
-                type="button"
-                id="save"
-                class="btn primary btn-block white--text v-size--default"
-              >
-                Back
-              </button> -->
-            </div>
-          </div>
-          <div class="col col-lg-3 text-right">
-            <div style="width: 150px; float: right">
-              <button
-                :disabled="!displaybutton"
-                :loading="loading"
-                @click="onSubmit"
-                type="button"
-                id="save"
-                class="btn primary btn-block white--text v-size--default"
-              >
-                Submit
-              </button>
-            </div>
-          </div>
+      <v-col cols="12" class="text-right">
+        <div>
+          <span v-if="errors && errors.message" class="text-danger mt-2">{{
+            errors.message
+          }}</span>
         </div>
+
+        <v-btn
+          :disabled="!displaybutton"
+          :loading="loading"
+          @click="submit"
+          id="save"
+          class="primary"
+        >
+          Submit
+        </v-btn>
       </v-col>
     </v-row>
   </div>
 </template>
 
 <script>
-// import Back from "../components/Snippets/Back.vue";
-
 export default {
-  components: {},
   data() {
     return {
+      floor_id: [],
+      floors: [],
+      room_id: [],
+      rooms: [],
       isCompany: true,
       loading: false,
       counter: 0,
@@ -521,7 +444,6 @@ export default {
       loading: true,
       endpointEmployee: "get_employeeswith_timezonename",
       endpointUpdatetimezoneStore: "employee_timezone_mapping",
-      //endpointUpdatetimezoneUpdate: "employee_timezone_mapping",
       endpointDevise: "device",
       leftSelectedEmp: [],
       departmentselected: [],
@@ -563,10 +485,56 @@ export default {
   },
   async created() {
     this.progressloading = true;
-    this.getEmployeesDataFromApi();
-    this.getDevisesDataFromApi();
+    await this.getFloors();
   },
   methods: {
+    async getFloors() {
+      let { data: floors } = await this.$axios.get(`floor`, {
+        params: { company_id: this.$auth.user.company_id },
+      });
+      this.floors = floors.data;
+    },
+    async getRoomsByFloorId(floor_id) {
+      let { data } = await this.$axios.get(`room-by-floor-id`, {
+        params: {
+          company_id: this.$auth.user.company_id,
+          floor_id: floor_id,
+        },
+      });
+      this.rooms = data;
+    },
+    async getTanentsAndMembersByRoom(room_id) {
+      let { data } = await this.$axios.get(`tanents-and-members-by-room-id`, {
+        params: {
+          company_id: this.$auth.user.company_id,
+          room_id: room_id,
+        },
+      });
+
+      let result = [];
+      data.forEach((e) => {
+        result.push({
+          id: e.id,
+          full_name: e.full_name,
+          system_user_id: parseInt(e.system_user_id),
+          profile_picture: e.profile_picture,
+          isPrimaryUser: "(Primary Member)",
+        });
+
+        e.members.forEach((m) => {
+          result.push({
+            id: e.id + m.id,
+            full_name: m.full_name,
+            system_user_id: parseInt(e.system_user_id) + 1,
+            profile_picture: m.profile_picture,
+          });
+        });
+      });
+
+      this.leftEmployees = result;
+
+      this.getDevisesDataFromApi();
+    },
     can(per) {
       return this.$pagePermission.can(per, this);
     },
@@ -574,21 +542,12 @@ export default {
       this.errors = [];
       this.response = "";
 
-      // $.extend(this.rightEmployees, {
-      //   sdkEmpResponse: "",
-      // });
-      // $.extend(this.rightDevices, {
-      //   sdkDeviceResponse: "",
-      // });
       this.leftEmployees.forEach((element) => {
         element["sdkEmpResponse"] = "";
       });
       this.leftDevices.forEach((element) => {
         element["sdkDeviceResponse"] = "";
       });
-    },
-    goback() {
-      this.$router.push("/timezonemapping/list");
     },
     getDevisesDataFromApi() {
       this.$axios
@@ -604,23 +563,11 @@ export default {
           this.leftDevices = data.data;
         });
     },
-    getEmployeesDataFromApi() {
-      this.$axios
-        .get(`tanent`, {
-          params: {
-            per_page: 1000, //this.pagination.per_page,
-            company_id: this.$auth.user.company_id,
-          },
-        })
-        .then(({ data }) => {
-          this.leftEmployees = data.data;
-        }, 1000);
-    },
     sortObject: (o) =>
       o.sort(function compareByName(a, b) {
-        if (a.first_name && b.first_name) {
-          let nameA = a.first_name.toUpperCase(); // Convert names to uppercase for case-insensitive sorting
-          let nameB = b.first_name.toUpperCase();
+        if (a.full_name && b.full_name) {
+          let nameA = a.full_name.toUpperCase(); // Convert names to uppercase for case-insensitive sorting
+          let nameB = b.full_name.toUpperCase();
 
           if (nameA < nameB) {
             return -1;
@@ -752,13 +699,10 @@ export default {
       this.rightSelectedEmp.pop(id);
       this.verifySubmitButton();
     },
-    check: function (id, e) {},
     selectLeftEmployee(id) {
       this.leftSelectedEmp.push(id);
     },
-
     moveToRightEmpOption2() {
-      this.resetErrorMessages();
       this.resetErrorMessages();
       if (!this.leftSelectedEmp.length) return;
 
@@ -928,7 +872,7 @@ export default {
       this.leftSelectedDevices.pop(id);
       this.verifySubmitButton();
     },
-    async onSubmit() {
+    async submit() {
       this.loading = true;
       if (this.rightEmployees.length == 0) {
         this.response = this.response + " Atleast select one Employee Details";
@@ -943,15 +887,12 @@ export default {
 
       this.rightEmployees.forEach((item) => {
         let person = {
-          name: item.first_name + " " + item.last_name,
-
+          name: item.full_name,
           userCode: parseInt(item.system_user_id),
-
-          //faceImage: `https://stagingbackend.ideahrms.com/media/employee/profile_picture/1686381362.jpg?t=786794`,
-          faceImage:
-            process.env.APP_ENV != "local"
-              ? item.profile_picture
-              : "https://backend.mytime2cloud.com/media/employee/profile_picture/1697544063.jpg",
+          faceImage: item.profile_picture,
+          // process.env.APP_ENV != "local"
+          //   ? item.profile_picture
+          //   : "https://backend.mytime2cloud.com/media/employee/profile_picture/1697544063.jpg",
         };
         personListArray.push(person);
       });
@@ -972,19 +913,17 @@ export default {
       });
 
       //try {
-      const { data } = await this.$axios.post(
-        `/Person/AddRange/Photos`,
-        payload
-      );
+      let endpoint = `/Person/AddRange/Photos`;
+
+      const { data } = await this.$axios.post(endpoint, payload);
 
       if (data.status == 200) {
         this.loading_dialog = false;
 
         this.snackbar.show = true;
-        this.response = "Employee(s) Pictures  has been uploaded";
+        this.response = "Employee(s) Pictures has been uploaded";
 
         let jsrightEmployees = this.rightEmployees;
-        let SDKSuccessStatus = true;
         jsrightEmployees.forEach((element) => {
           element["sdkEmpResponse"] = "Success";
         });
@@ -993,21 +932,6 @@ export default {
           this.errors = [];
           this.loading = false;
         });
-
-        // data.data.forEach((e) => {
-        //   const index = this.devices_dialog.findIndex(
-        //     (item) => item.device_id === e.sn
-        //   );
-        //   if (index !== -1) {
-        //     const updatedElement = {
-        //       ...this.devices_dialog[index],
-        //       state: e.state,
-        //       message: e.message || "Success",
-        //     };
-
-        //     this.devices_dialog.splice(index, 1, updatedElement);
-        //   }
-        // });
       } else {
         this.loading_dialog = false;
         this.snackbar.show = true;
@@ -1017,12 +941,6 @@ export default {
       }
 
       this.displaybutton = true;
-      // } catch (error) {
-      //   this.loading_dialog = false;
-      //   this.snackbar = true;
-      //   this.response = error.message;
-
-      // }
     },
   },
 };

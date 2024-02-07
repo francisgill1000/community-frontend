@@ -160,10 +160,14 @@
         <v-stepper v-model="step" horizontal>
           <v-stepper-header>
             <v-stepper-step :complete="step > 1" step="1" editable>
-              Basic Info {{ payload.id }}
+              Basic Info
             </v-stepper-step>
             <v-divider></v-divider>
             <v-stepper-step :complete="step > 2" step="2" editable>
+              Members
+            </v-stepper-step>
+            <v-divider></v-divider>
+            <v-stepper-step :complete="step > 3" step="3" editable>
               Documentation
             </v-stepper-step>
           </v-stepper-header>
@@ -184,7 +188,7 @@
                 </div>
               </v-col>
               <v-col cols="9">
-                <v-row class="mt-1">
+                <v-row class="mt-4">
                   <v-col cols="6">
                     <v-autocomplete
                       @change="getRoomsByFloorId(payload.floor_id)"
@@ -206,6 +210,7 @@
 
                   <v-col cols="6">
                     <v-autocomplete
+                      @change="getRoomNumber(payload.room_id)"
                       label="Room"
                       outlined
                       :readonly="disabled"
@@ -538,6 +543,115 @@
           </v-stepper-content>
 
           <v-stepper-content step="2">
+            <!-- Step 1 Content -->
+            <v-card
+              outlined
+              v-for="(member, index) in payload.members"
+              :key="index"
+              class="mb-2"
+            >
+              <v-container>
+                <v-row>
+                  <v-col cols="3">
+                    <div class="text-center">
+                      <SnippetsUploadAttachment
+                        :defaultImage="member.profile_picture"
+                        @uploaded="
+                          (e) => {
+                            member.profile_picture = e;
+                          }
+                        "
+                      />
+
+                      <span
+                        v-if="errors && errors.logo"
+                        class="text-danger mt-2"
+                        >{{ errors.logo[0] }}</span
+                      >
+                    </div>
+                  </v-col>
+                  <v-col cols="9">
+                    <v-row class="mt-1">
+                      <v-col cols="6">
+                        <v-text-field
+                          label="Full Name"
+                          :readonly="disabled"
+                          v-model="member.full_name"
+                          dense
+                          class="text-center"
+                          outlined
+                          :hide-details="!errors.full_name"
+                          :error-messages="
+                            errors && errors.full_name
+                              ? errors.full_name[0]
+                              : ''
+                          "
+                        ></v-text-field>
+                      </v-col>
+
+                      <v-col cols="6">
+                        <v-text-field
+                          label="Relation"
+                          :readonly="disabled"
+                          v-model="member.relation"
+                          dense
+                          class="text-center"
+                          outlined
+                          :hide-details="!errors.relation"
+                          :error-messages="
+                            errors && errors.relation ? errors.relation[0] : ''
+                          "
+                        ></v-text-field>
+                      </v-col>
+
+                      <v-col cols="6">
+                        <v-text-field
+                          label="Age"
+                          :readonly="disabled"
+                          v-model="member.age"
+                          dense
+                          class="text-center"
+                          outlined
+                          :hide-details="!errors.age"
+                          :error-messages="
+                            errors && errors.age ? errors.age[0] : ''
+                          "
+                        ></v-text-field>
+                      </v-col>
+
+                      <v-col cols="6">
+                        <v-text-field
+                          label="Phone Number (optional)"
+                          :readonly="disabled"
+                          v-model="member.phone_number"
+                          dense
+                          class="text-center"
+                          outlined
+                          :hide-details="!errors.phone_number"
+                          :error-messages="
+                            errors && errors.phone_number
+                              ? errors.phone_number[0]
+                              : ''
+                          "
+                        ></v-text-field>
+                      </v-col>
+
+                      <v-col cols="12" class="text-right mt-12">
+                        <v-btn
+                          v-if="formAction == 'Edit'"
+                          class="primary"
+                          @click="update_member(member)"
+                          >Update</v-btn
+                        >
+                      </v-col>
+                    </v-row>
+                  </v-col>
+                </v-row>
+              </v-container>
+            </v-card>
+          </v-stepper-content>
+
+          <v-stepper-content step="3">
             <!-- Step 2 Content -->
             <v-row>
               <v-col
@@ -883,11 +997,11 @@ export default {
     // "webaccess": true,
     headers: [
       {
-        text: "Tanent Id",
+        text: "User Device Id",
         align: "left",
         sortable: true,
-        key: "id",
-        value: "id",
+        key: "system_user_id",
+        value: "system_user_id",
         filterable: true,
         filterSpecial: false,
       },
@@ -1054,6 +1168,10 @@ export default {
     removeMemberItem(index) {
       this.members.splice(index, 1);
     },
+    getRoomNumber(room_id) {
+      let { room_number } = this.rooms.find((e) => e.id == room_id);
+      this.payload.room_number = room_number || 0;
+    },
     async getFloors() {
       let { data: floors } = await this.$axios.get(`floor`, {
         params: { company_id: this.$auth.user.company_id },
@@ -1061,6 +1179,9 @@ export default {
       this.floors = floors.data;
     },
     async getRoomsByFloorId(floor_id) {
+      let { floor_number } = this.floors.find((e) => e.id == floor_id);
+      this.payload.floor_number = floor_number || 0;
+
       let { data } = await this.$axios.get(`room-by-floor-id`, {
         params: {
           company_id: this.$auth.user.company_id,
@@ -1404,6 +1525,31 @@ export default {
 
       // }
     },
+
+    update_member(member) {
+      let formData = new FormData();
+
+      if (member.profile_picture.name) {
+        formData.append("profile_picture", member.profile_picture);
+      }
+
+      formData.append("full_name", member.full_name);
+      formData.append("relation", member.relation);
+      formData.append("age", member.age);
+      formData.append("phone_number", member.phone_number);
+
+      this.$axios
+        .post("/members-update/" + member.id, formData)
+        .then(({ data }) => {
+          this.handleSuccessResponse("Member updated successfully");
+        })
+        .catch(({ response }) => {
+          this.handleErrorResponse(response);
+        });
+
+      // }
+    },
+
     handleSuccessResponse(message) {
       this.errors = [];
       this.snackbar = true;

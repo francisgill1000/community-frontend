@@ -1828,11 +1828,7 @@ export default {
       this.isFilter = false;
       this.getDataFromApi();
     },
-    async getDataFromApi(
-      url = this.endpoint,
-      filter_column = "",
-      filter_value = ""
-    ) {
+    async getDataFromApi() {
       this.loading = true;
       const data = await this.$store.dispatch("fetchData", {
         key: "devices",
@@ -1844,50 +1840,6 @@ export default {
       this.data = data.data;
       this.totalRowsCount = data.total;
       this.loading = false;
-
-      return;
-
-      if (url == "") url = this.endpoint;
-      this.loading = true;
-      let { sortBy, sortDesc, page, itemsPerPage } = this.options;
-
-      let sortedBy = sortBy ? sortBy[0] : "";
-      let sortedDesc = sortDesc ? sortDesc[0] : "";
-      let options = {
-        params: {
-          page: page,
-          sortBy: sortedBy,
-          sortDesc: sortedDesc,
-          per_page: itemsPerPage,
-          branch_id: this.branch_id,
-          company_id: this.$auth.user.company_id,
-          ...this.filters,
-        },
-      };
-      if (filter_column != "") {
-        if (filter_column == "serach_status_name") {
-          options.params[filter_column] =
-            filter_value.toLowerCase() == "online"
-              ? "active"
-              : filter_value.toLowerCase() == "offline"
-              ? "inactive"
-              : "";
-        } else options.params[filter_column] = filter_value;
-      }
-      await this.$axios.get(`${url}?page=${page}`, options).then(({ data }) => {
-        if (filter_column != "" && data.data.length == 0) {
-          this.snack = true;
-          this.snackColor = "error";
-          this.snackText = "No Results Found";
-          this.loading = false;
-          return false;
-        }
-        this.totalRowsCount = data.total;
-        this.data = data.data;
-        this.pagination.current = data.current_page;
-        this.pagination.total = data.last_page;
-        this.loading = false;
-      });
     },
     async updateDevicesHealth() {
       let options = {
@@ -1902,6 +1854,10 @@ export default {
           this.snackbar = true;
           this.response = data;
           this.getDataFromApi();
+        })
+        .catch(({ response }) => {
+          this.snackbar = true;
+          this.response = `Internal Server Error`;
         });
     },
 
